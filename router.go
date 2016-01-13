@@ -64,8 +64,10 @@ func (r *Router) AddStatus(status int, function RouterFunc) {
 // HandleStatus 处理不同的状态信息
 func (r Router) HandleStatus(status int, res Resource) {
 	if f, ok := r.status[status]; ok {
+		res.W.WriteHeader(status)
 		f(res)
 	} else {
+		res.W.WriteHeader(400)
 		r.status[400](res)
 	}
 }
