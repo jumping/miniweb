@@ -6,6 +6,14 @@ import (
 	"fmt"
 )
 
+// 定义实现Controller的接口
+type ControllerInter interface {
+	// 解析页面模板
+	Render(Resource, string, interface{})
+	// 将数据编码成JSON格式然后发送给客户端
+	RenderJSON(Resource, interface{})
+}
+
 type Controller struct {
 	
 }
