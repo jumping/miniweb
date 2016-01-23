@@ -29,7 +29,7 @@ type RouterFunc interface{}
 func NewRouter() *Router {
 	r := new(Router)
 	r.mux = make(map[string]RouterFunc)
-	r.status = Status{}
+	r.status = &Status{}
 	
 	return r
 }
@@ -57,19 +57,23 @@ func (r *Router) Add(url string, controller RouterFunc) {
 }*/
 
 // AddStatus 添加自定义的状态处理函数
-/*func (r *Router) AddStatus(status int, function RouterFunc) {
-	r.status[status] = function
+func (r *Router) AddStatus(status int, s interface{}) {
+	r.status = s
 }
+
 // HandleStatus 处理不同的状态信息
 func (r Router) HandleStatus(status int, res Resource) {
-	if f, ok := r.status[status]; ok {
-		res.W.WriteHeader(status)
-		f(res)
+	// 使用反射处理各种的调用
+	statusObj := reflect.ValueOf(r.status).Elem()
+	params := make([]reflect.Value, 1)
+	params[0] = reflect.ValueOf(res)
+	method := statusObj.MethodByName("Status" + fmt.Sprint(status))
+	if method.IsValid() {
+		method.Call(params)
 	} else {
-		res.W.WriteHeader(400)
-		r.status[400](res)
+		panic("Unknown status: " + fmt.Sprint(status))
 	}
-}*/
+}
 
 // 实现Handler接口
 func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -78,6 +82,7 @@ func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c := r.mux["/" + resource.C]
 	if c == nil {
 		fmt.Println("No path router:", resource.C)
+		r.HandleStatus(404, resource)
 	} else {
 		if resource.C == "static" {
 			// 响应静态文件的处理
@@ -86,13 +91,14 @@ func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		// 反射处理
 		// 用于处理URL中的ControllerName和MethodName
 		controller := reflect.ValueOf(c).Elem()
-		params := make([]reflect.Value,1)
+		params := make([]reflect.Value, 1)
 		params[0] = reflect.ValueOf(resource)
 		method := controller.MethodByName(resource.M)
 		if method.IsValid() {
 			method.Call(params)
 		} else {
 			fmt.Println("Invaild request method:", resource.M)
+			r.HandleStatus(404, resource)
 		}
 	}
 }
