@@ -22,7 +22,7 @@ type Router struct {
 
 // RouterFunc 用于路由响应函数的定义
 // 将请求的资源路径和对应的处理函数关联
-type RouterFunc ControllerInter
+type RouterFunc interface{}
 
 // NewRouter 创建一个新的路由器
 // 初始化一个路由器以及相关默认的行为
@@ -79,6 +79,10 @@ func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if c == nil {
 		fmt.Println("No path router:", resource.C)
 	} else {
+		if resource.C == "static" {
+			// 响应静态文件的处理
+			resource.M = "Static"
+		}
 		// 反射处理
 		// 用于处理URL中的ControllerName和MethodName
 		controller := reflect.ValueOf(c).Elem()

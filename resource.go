@@ -42,8 +42,17 @@ func NewResource(w http.ResponseWriter, r *http.Request) Resource {
 			mn = "Index"
 		}
 	} else {
-		cn = path[1]
-		mn = path[2]
+		if path[1] == "" {
+			cn = "Index"
+		} else {
+			cn = path[1]
+		}
+		
+		if path[2] == "" {
+			mn = "Index"
+		} else {
+			mn = path[2]
+		}
 	}
 	
 	return Resource {
