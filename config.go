@@ -32,7 +32,7 @@ func (c Config) Get(section, key string) string {
 	}
 	value, err := c.cf.GetValue(section, key)
 	if err != nil {
-		panic("Configuration items that do not exist!")
+		return ""
 	}
 	return value
 }
