@@ -3,6 +3,7 @@ package miniweb
 import (
 	"html/template"
 	"encoding/json"
+	"strings"
 	"fmt"
 )
 
@@ -19,8 +20,13 @@ type Controller struct {
 }
 
 // 用于解析模板的方法
-func (c Controller) Render(res Resource, temp string, data interface{}) {
-	t, _ := template.ParseFiles(temp)
+func (c Controller) Render(res Resource, data interface{}) {
+	folder := VIEW + "/" +res.C
+	file := folder + "/" + strings.ToLower(res.M) + SUFFIX
+	t, err := template.ParseFiles(file)
+	if err != nil {
+		panic("\n\nError: 模板解析失败\n\t" + err.Error() + "\n\n")
+	}
 	t.Execute(res.W, data)
 }
 

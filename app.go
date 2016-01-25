@@ -5,8 +5,15 @@ import (
 	"net/http"
 )
 
-// 全局配置对象
-var Conf *Config
+// 全局参数
+var (
+	// 全局配置对象
+	Conf *Config
+	// 默认的模板路径
+	VIEW string = "./view"
+	// 默认模板后缀
+	SUFFIX string = ".html"
+)
 
 // 导入包的时候，默认初始化全局配置对象
 // 注意：这里的初始化是在导入该包的时候
