@@ -17,6 +17,8 @@ var (
 	LAYOUT bool = false
 	// 默认的layout目录的名称
 	LAYOUT_DIR string = VIEW + "/" + "layout"
+	// 是否开启调试模式，默认关闭调试模式
+	DEBUG bool = false
 )
 
 // 导入包的时候，默认初始化全局配置对象
@@ -29,12 +31,15 @@ func init() {
 	// 初始化配置项 section = Global
 	var section string = "Global"
 	var tmp string =""
+	
 	if tmp = Conf.Get(section, "view"); tmp != "" {
 		VIEW = tmp
 	}
+	
 	if tmp = Conf.Get(section, "suffix"); tmp != "" {
 		SUFFIX = tmp
 	}
+	
 	if tmp = Conf.Get(section, "layout"); tmp != "" {
 		if tmp == "true" {
 			LAYOUT = true
@@ -42,8 +47,17 @@ func init() {
 			LAYOUT = false
 		}
 	}
-	if tmp = Conf.Get(section, "layout_DIR"); tmp != "" {
+	
+	if tmp = Conf.Get(section, "layout_dir"); tmp != "" {
 		LAYOUT_DIR = VIEW + "/" + tmp
+	}
+	
+	if tmp = Conf.Get(section, "debug"); tmp != "" {
+		if tmp == "true" {
+			DEBUG = true
+		} else {
+			DEBUG = false
+		}
 	}
 	
 }

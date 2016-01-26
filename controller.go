@@ -6,6 +6,8 @@ import (
 	"strings"
 	"bytes"
 	"fmt"
+	"os"
+	"io"
 )
 
 type Controller struct {
@@ -19,25 +21,28 @@ type Controller struct {
 func (c Controller) Render(res Resource, data interface{}) {
 	//var tempfile string
 	// 判断请求的页面是否已经被缓存
-	if is, _ := c.hasCache(res.C, res.M); is {
+	if isExist, cacheFile := c.hasCache(res.C, res.M); isExist {
 		// 缓存存在则直接输出缓存
-		// TODO 打开指定的缓存文件，并直接写入到res.W
-		
+		// 将打开的文件内容，复制到响应的对象中去
+		io.Copy(res.W, cacheFile)
+		cacheFile.Close()
 		return
 	}
-	
+	fmt.Println("没找到缓存文件")
 	folder := VIEW + "/" +res.C
 	file := folder + "/" + strings.ToLower(res.M) + SUFFIX
+	// 创建缓冲区
+	buf := make([]byte, 1024)
+	c.buffer = bytes.NewBuffer(buf)
 	
 	if LAYOUT {
-		buf := make([]byte, 1024)
-		c.buffer = bytes.NewBuffer(buf)
 		// 如果开启了模板
 		// 先解析相应的页面，再将解析的内容写入解析的模板中，最后输出到浏览器中
 		t, err := template.ParseFiles(file)
 		if err != nil {
 			panic("\n\nError: 模板解析失败\n\t" + err.Error() + "\n\n")
 		}
+		// 将解析的页面写入缓冲区中
 		t.Execute(c.buffer, data)
 		// 解析layout
 		if c.Layout == "" {
@@ -48,20 +53,37 @@ func (c Controller) Render(res Resource, data interface{}) {
 			panic("\n\nError: 模板解析失败\n\t" + err.Error() + "\n\n")
 		}
 		layoutdata := make(map[string]template.HTML)
-		//fmt.Println(c.buffer.Bytes())
 		index := bytes.LastIndexByte(c.buffer.Bytes(), 0)
 		layoutdata["LayoutContent"] = template.HTML(c.buffer.Bytes()[index + 1 : c.buffer.Len()])
-		// 设置响应头
-		res.W.Header().Add("Content-Type", "text/html; charset=utf-8")
-		res.W.WriteHeader(200)
-		t.Execute(res.W, layoutdata)
+		// 转存完缓冲区中的内容时，需要重置缓冲区
+		c.buffer.Reset()
+		// 将模板解析完成后也写入缓冲区
+		t.Execute(c.buffer, layoutdata)
 	} else {
 		// 没有开启模板就直接解析
 		t, err := template.ParseFiles(file)
 		if err != nil {
 			panic("\n\nError: 模板解析失败\n\t" + err.Error() + "\n\n")
 		}
-		t.Execute(res.W, data)
+		t.Execute(c.buffer, data)
+	}
+	
+	// 这里统一将缓冲区内容写入res.W，同时保存一份在缓存文件中
+	// 获取缓冲区中的有效部分
+	index := bytes.LastIndexByte(c.buffer.Bytes(), 0)
+	tmp := c.buffer.Bytes()[index + 1 : c.buffer.Len()]
+	// 响应客户端的请求
+	// 设置响应头
+	res.W.Header().Add("Content-Type", "text/html; charset=utf-8")
+	res.W.WriteHeader(200)
+	res.W.Write(tmp)
+	// 判断是否需要缓存页面
+	// 调试模式下(debug = true)是不需要创建缓存的
+	if !DEBUG {
+		// 创建缓存页面
+		cachefile := c.createCacheFile(res.C, res.M)
+		cachefile.Write(tmp)
+		cachefile.Close()
 	}
 }
 
@@ -80,7 +102,48 @@ func (c Controller) RenderJSON(res Resource, data interface{}) {
 // 判断页面缓存是否存在，如果页面缓存过期则也算不存在
 // cn ControllerName
 // mn MethodName
-func (c Controller) hasCache(cn, mn string) (bool, string) {
-	// 先判断缓存目录是否存在
-	return false, ""
+func (c Controller) hasCache(cn, mn string) (bool, *os.File) {
+	// 先判断是否开启了调试模式
+	// 如果开启了调试模式则，不缓存页面
+	if DEBUG {
+		return false, nil
+	}
+	// 下面是没有开启调试模式，则缓存存在
+	// 直接打开缓存文件
+	// TODO 该过程有待优化
+	cacheFilePath := "./cache/" + cn + "/" + strings.ToLower(mn) + SUFFIX
+	file, err := os.Open(cacheFilePath)
+	if err == nil {
+		// 当页面缓存存在时，并且没有过期
+		// TODO 这里需要处理缓存页面过期的问题
+		
+		// 将打开的文件指针返回
+		return true, file
+		
+	}
+	
+	// 缓存文件不存在
+	return false, nil
+}
+
+// 创建缓存文件并返回打开的文件指针
+func (c Controller) createCacheFile(cn, mn string) *os.File {
+	// 判断cache目录是否存在
+	_, err := os.Stat("cache/")
+	if os.IsNotExist(err) {
+		os.Mkdir("cache", 0777)
+	}
+	// 判断cn目录是否存在
+	_, err = os.Stat("cache/" + cn)
+	if os.IsNotExist(err) {
+		os.Mkdir("cache/" + cn, 0777)
+	}
+	
+	// 创建对应的缓存文件
+	f, err := os.Create("cache/" + cn + "/" + strings.ToLower(mn) + SUFFIX)
+	if err != nil {
+		panic("\n\n\nCreate cache file '" + cn + "/" + mn + "' fail\n\n\n")
+	}
+	
+	return f
 }
