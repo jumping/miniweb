@@ -12,6 +12,9 @@ import (
 )
 
 type Controller struct {
+	// 临时关闭模板功能 默认值为false
+	// 临时关闭模板的设置只在当前请求中有效
+	CloseLayout bool
 	// 指明使用的模板
 	Layout string
 	// 存储模板的缓冲区
@@ -36,7 +39,8 @@ func (c Controller) Render(res Resource, data interface{}) {
 	buf := make([]byte, 1024)
 	c.buffer = bytes.NewBuffer(buf)
 	
-	if LAYOUT {
+	// 开启了模板并且没有临时关闭
+	if LAYOUT && !c.CloseLayout {
 		// 如果开启了模板
 		// 先解析相应的页面，再将解析的内容写入解析的模板中，最后输出到浏览器中
 		t, err := template.ParseFiles(file)
