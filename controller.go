@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"bytes"
+	"time"
 	"fmt"
 	"os"
 	"io"
@@ -116,7 +117,23 @@ func (c Controller) hasCache(cn, mn string) (bool, *os.File) {
 	if err == nil {
 		// 当页面缓存存在时，并且没有过期
 		// TODO 这里需要处理缓存页面过期的问题
-		
+		fileinfo, err := file.Stat()
+		if err != nil {
+			fmt.Println(err)
+		}
+		modtime := fileinfo.ModTime()
+		fmt.Println("modtime", modtime)
+		currtime := time.Now()
+		fmt.Println("currtime", currtime)
+		// 获取缓存文件距今创建多久了
+		diff := currtime.Sub(modtime)
+		fmt.Println("diff", int(diff / time.Second))
+		// 当缓存失效时
+		if int(diff / time.Second) > Conf.Int("cache", "lifetime") {
+			// 当上一次缓存文件的修改时间距今超过了设置的秒数，则缓存失效
+			// 解析模板时，会重新创建缓存文件
+			return false, nil
+		}
 		// 将打开的文件指针返回
 		return true, file
 		

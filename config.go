@@ -25,7 +25,7 @@ func InitConfig() *Config {
 
 }
 
-// 获取配置
+// 获取配置(string)
 func (c Config) Get(section, key string) string {
 	if c.cf == nil {
 		return ""
@@ -33,6 +33,18 @@ func (c Config) Get(section, key string) string {
 	value, err := c.cf.GetValue(section, key)
 	if err != nil {
 		return ""
+	}
+	return value
+}
+
+// 获取整形配置
+func (c Config) Int(section, key string) int {
+	if c.cf == nil {
+		return -1
+	}
+	value, err := c.cf.Int(section, key)
+	if err != nil {
+		return -1
 	}
 	return value
 }
