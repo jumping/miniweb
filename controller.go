@@ -3,6 +3,7 @@ package miniweb
 import (
 	"html/template"
 	"encoding/json"
+	"net/http"
 	"strings"
 	"bytes"
 	"time"
@@ -167,4 +168,9 @@ func (c Controller) createCacheFile(cn, mn string) *os.File {
 	}
 	
 	return f
+}
+
+// 实现页面重定向，临时重定向默认状态码为307
+func (c Controller) Redirect(res Resource, url string) {
+	http.Redirect(res.W, res.R, url, 307)
 }
