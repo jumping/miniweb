@@ -37,8 +37,7 @@ func (c Controller) Render(res Resource, data interface{}) {
 	folder := VIEW + "/" +res.C
 	file := folder + "/" + strings.ToLower(res.M) + SUFFIX
 	// 创建缓冲区
-	buf := make([]byte, 1024)
-	c.buffer = bytes.NewBuffer(buf)
+	c.buffer = bytes.NewBuffer(nil)
 	
 	// 开启了模板并且没有临时关闭
 	if LAYOUT && !c.CloseLayout {
@@ -59,8 +58,7 @@ func (c Controller) Render(res Resource, data interface{}) {
 			panic("\n\nError: 模板解析失败\n\t" + err.Error() + "\n\n")
 		}
 		layoutdata := make(map[string]template.HTML)
-		index := bytes.LastIndexByte(c.buffer.Bytes(), 0)
-		layoutdata["LayoutContent"] = template.HTML(c.buffer.Bytes()[index + 1 : c.buffer.Len()])
+		layoutdata["LayoutContent"] = template.HTML(c.buffer.Bytes())
 		// 转存完缓冲区中的内容时，需要重置缓冲区
 		c.buffer.Reset()
 		// 将模板解析完成后也写入缓冲区
@@ -75,20 +73,17 @@ func (c Controller) Render(res Resource, data interface{}) {
 	}
 	
 	// 这里统一将缓冲区内容写入res.W，同时保存一份在缓存文件中
-	// 获取缓冲区中的有效部分
-	index := bytes.LastIndexByte(c.buffer.Bytes(), 0)
-	tmp := c.buffer.Bytes()[index + 1 : c.buffer.Len()]
 	// 响应客户端的请求
 	// 设置响应头
 	res.W.Header().Add("Content-Type", "text/html; charset=utf-8")
 	res.W.WriteHeader(200)
-	res.W.Write(tmp)
+	res.W.Write(c.buffer.Bytes())
 	// 判断是否需要缓存页面
 	// 调试模式下(debug = true)是不需要创建缓存的
 	if !DEBUG {
 		// 创建缓存页面
 		cachefile := c.createCacheFile(res.C, res.M)
-		cachefile.Write(tmp)
+		cachefile.Write(c.buffer.Bytes())
 		cachefile.Close()
 	}
 }
