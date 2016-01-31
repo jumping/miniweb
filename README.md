@@ -72,9 +72,11 @@ LAYOUT bool = false
 LAYOUT_DIR string = VIEW + "/" + "layout"
 // 是否开启调试模式，默认关闭调试模式
 DEBUG bool = false
+// Secret_key
+SECRET_KEY string = "pe@n@vwa)!7#y+yyxmc8h&e=^-5^5u+h5)aoq5-6s6zbh4g7c("
 
 ```
-这些配置项都可以在config.ini的[Global]里修改
+这些配置项都可以在config.ini的[Global]里修改，这些配置项在配置文件中都是小写
 
 ## 依赖
 [goconfig](http://github.com/Unknwon/goconfig)

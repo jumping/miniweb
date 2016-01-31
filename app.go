@@ -19,6 +19,7 @@ var (
 	LAYOUT_DIR string = VIEW + "/" + "layout"
 	// 是否开启调试模式，默认关闭调试模式
 	DEBUG bool = false
+	SECRET_KEY string = "pe@n@vwa)!7#y+yyxmc8h&e=^-5^5u+h5)aoq5-6s6zbh4g7c("
 )
 
 // 导入包的时候，默认初始化全局配置对象
@@ -58,6 +59,10 @@ func init() {
 		} else {
 			DEBUG = false
 		}
+	}
+	
+	if tmp = Conf.Get(section, "secret_key"); tmp != "" {
+		SECRET_KEY = tmp
 	}
 	
 }

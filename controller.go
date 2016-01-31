@@ -169,3 +169,14 @@ func (c Controller) createCacheFile(cn, mn string) *os.File {
 func (c Controller) Redirect(res Resource, url string) {
 	http.Redirect(res.W, res.R, url, 307)
 }
+
+// 清除指定的Cookie
+func (c Controller) ClearCookie(name string, res Resource) {
+	// 根据name创建一个过期的cookie
+	cookie := &http.Cookie {
+		Name: name,
+		Value: "",
+		Expires: time.Now(),
+	}
+	http.SetCookie(res.W, cookie)
+}
