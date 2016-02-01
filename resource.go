@@ -62,3 +62,17 @@ func NewResource(w http.ResponseWriter, r *http.Request) Resource {
 		R: r,
 	}
 }
+
+// 解析URL中的参数
+func (r Resource) URLValue(name string) string {
+	if name == "" {
+		return ""
+	}
+	
+	values := r.R.URL.Query()
+	if value, ok := values[name]; ok {
+		return value[0]
+	} else {
+		return ""
+	}
+}
