@@ -18,6 +18,8 @@ type Controller struct {
 	CloseLayout bool
 	// 指明使用的模板
 	Layout string
+	// 模板数据
+	LayoutData map[string]interface{}
 	// 存储模板的缓冲区
 	buffer *bytes.Buffer
 }
@@ -57,12 +59,14 @@ func (c Controller) Render(res Resource, data interface{}) {
 		if err != nil {
 			panic("\n\nError: 模板解析失败\n\t" + err.Error() + "\n\n")
 		}
-		layoutdata := make(map[string]template.HTML)
-		layoutdata["LayoutContent"] = template.HTML(c.buffer.Bytes())
+		if c.LayoutData == nil {
+			c.LayoutData = make(map[string]interface{})
+		}
+		c.LayoutData["LayoutContent"] = template.HTML(c.buffer.Bytes())
 		// 转存完缓冲区中的内容时，需要重置缓冲区
 		c.buffer.Reset()
 		// 将模板解析完成后也写入缓冲区
-		t.Execute(c.buffer, layoutdata)
+		t.Execute(c.buffer, c.LayoutData)
 	} else {
 		// 没有开启模板就直接解析
 		t, err := template.ParseFiles(file)
